@@ -9,6 +9,33 @@ is_column_names <- function(str) {
 }
 
 #' @export
+read_factor_csv <- function(file) {
+  lines <- readLines(file)
+
+  empty_lines <- which(lines == "")
+  data_skip <- empty_lines[-length(empty_lines)] %>% purrr::map_int(function(i) {
+    if (is_column_names(lines[i + 1])) {
+      i
+    } else {
+      i + 1
+    }
+  })
+  data_end <- empty_lines[-1] - 2
+
+  data_names <- lines[data_skip] %>% stringr::str_trim()
+  data_names[1] <- "Monthly Factors"
+  data <- purrr::map2(data_skip, data_end, function(skip, end) {
+    readr::read_csv(
+      file = file,
+      skip = skip,
+      n_max = end - skip
+    )
+  })
+  names(data) <- data_names
+  data
+}
+
+#' @export
 process_factor_csv <- function(file) {
   lines <- readLines(file)
 
